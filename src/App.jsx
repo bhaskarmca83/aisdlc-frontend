@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePipeline } from './hooks/usePipeline'
 import PipelineStages     from './components/PipelineStages'
 import LogStream          from './components/LogStream'
@@ -11,7 +11,8 @@ const TABS = ['Memory', 'Tools', 'Gate']
 
 export default function App() {
   const {
-    executionId, status, stageMap, logs, toolCalls,
+    executionId, status, activeGate, gateMessage,
+    stageMap, logs, toolCalls,
     stateSnapshot, metrics, streamBuffer,
     run, approve, reset,
   } = usePipeline()
@@ -20,6 +21,11 @@ export default function App() {
   const [projectName, setProjectName] = useState('SDLC Project')
   const [activeTab,   setActiveTab]   = useState('Memory')
   const [error,       setError]       = useState('')
+
+  // Auto-switch to Gate tab when pipeline pauses for approval
+  useEffect(() => {
+    if (activeGate) setActiveTab('Gate')
+  }, [activeGate])
 
   const handleRun = async () => {
     if (!idea.trim()) { setError('Please enter an idea'); return }
@@ -131,7 +137,7 @@ export default function App() {
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'Memory' && <MemoryViewer stateSnapshot={stateSnapshot} />}
             {activeTab === 'Tools'  && <ToolCallInspector toolCalls={toolCalls} />}
-            {activeTab === 'Gate'   && <ApprovalGate status={status} onApprove={approve} />}
+            {activeTab === 'Gate'   && <ApprovalGate status={status} activeGate={activeGate} gateMessage={gateMessage} onApprove={approve} />}
           </div>
         </aside>
 

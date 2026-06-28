@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E2E AI SDLC Orchestration Platform — Architecture Blueprint</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #0f1524;
+    --surface2: #151c30;
+    --border: #1e2d4a;
+    --border2: #243350;
+    --accent-blue: #3b82f6;
+    --accent-cyan: #06b6d4;
+    --accent-green: #10b981;
+    --accent-amber: #f59e0b;
+    --accent-purple: #8b5cf6;
+    --accent-red: #ef4444;
+    --accent-pink: #ec4899;
+    --text: #e2e8f0;
+    --text-muted: #64748b;
+    --text-dim: #94a3b8;
+    --bedrock: #f59e0b;
+    --vertex: #4285f4;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  header {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0d1628 50%, #0a0e1a 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -80px; left: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: 200px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(139,92,246,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent-cyan);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+  header h1 span { color: var(--accent-blue); }
+  .header-sub {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .header-badges {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .badge-blue { background: rgba(59,130,246,0.15); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; }
+  .badge-green { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+  .badge-amber { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
+  .badge-purple { background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3); color: #c4b5fd; }
+  .badge-cyan { background: rgba(6,182,212,0.15); border: 1px solid rgba(6,182,212,0.3); color: #67e8f9; }
+
+  /* ── Nav tabs ── */
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 48px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text-dim); }
+  .tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); }
+
+  /* ── Content ── */
+  .content { padding: 40px 48px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .section-title::before {
+    content: '// ';
+    color: var(--accent-blue);
+  }
+
+  /* ── Pipeline flow ── */
+  .pipeline {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 40px;
+  }
+  .pipeline-stage {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+  }
+  .pipeline-stage:hover { border-color: var(--border2); background: var(--surface2); }
+  .pipeline-stage.expanded { border-color: var(--border2); }
+  .stage-num {
+    width: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+  .stage-icon {
+    width: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+  }
+  .stage-main {
+    flex: 1;
+    padding: 16px 20px;
+  }
+  .stage-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .stage-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .stage-agent {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-cyan);
+    background: rgba(6,182,212,0.1);
+    border: 1px solid rgba(6,182,212,0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .stage-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .stage-meta {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .stage-provider {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .provider-bedrock { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.25); color: #fcd34d; }
+  .provider-vertex { background: rgba(66,133,244,0.12); border: 1px solid rgba(66,133,244,0.25); color: #93c5fd; }
+  .stage-tools {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: var(--mono);
+  }
+  .stage-detail {
+    display: none;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+    margin-top: 0;
+  }
+  .stage-detail.open { display: block; }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .detail-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .detail-box-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent-blue);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .detail-box ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .detail-box ul li {
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .detail-box ul li::before { content: '▸'; color: var(--accent-cyan); font-size: 8px; }
+
+  .gate-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    background: rgba(245,158,11,0.06);
+    border: 1px dashed rgba(245,158,11,0.3);
+    border-radius: 10px;
+    gap: 12px;
+    cursor: default;
+  }
+  .gate-icon { font-size: 18px; }
+  .gate-text { font-size: 13px; color: #fcd34d; font-weight: 600; }
+  .gate-sub { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+
+  /* ── Memory Architecture ── */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  .memory-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .memory-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .memory-card-icon { font-size: 20px; }
+  .memory-card-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .memory-card-sub { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+  .memory-schema {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text-dim);
+    overflow-x: auto;
+  }
+  .schema-key { color: #93c5fd; }
+  .schema-type { color: #fca5a5; }
+  .schema-comment { color: #475569; }
+  .schema-string { color: #86efac; }
+
+  .memory-flow {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+  .flow-steps {
+    display: flex;
+    gap: 0;
+    position: relative;
+    align-items: flex-start;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 130px;
+    flex: 1;
+    position: relative;
+  }
+  .flow-step::after {
+    content: '→';
+    position: absolute;
+    right: -12px;
+    top: 14px;
+    color: var(--accent-blue);
+    font-size: 16px;
+  }
+  .flow-step:last-child::after { display: none; }
+  .flow-step-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    background: var(--surface2);
+    border: 2px solid var(--border2);
+  }
+  .flow-step-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-align: center;
+    font-family: var(--mono);
+    line-height: 1.4;
+  }
+
+  /* ── Agent Cards ── */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .agent-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .agent-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .agent-card.blue::before { background: var(--accent-blue); }
+  .agent-card.cyan::before { background: var(--accent-cyan); }
+  .agent-card.green::before { background: var(--accent-green); }
+  .agent-card.amber::before { background: var(--accent-amber); }
+  .agent-card.purple::before { background: var(--accent-purple); }
+  .agent-card.pink::before { background: var(--accent-pink); }
+  .agent-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+  .agent-card-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 12px;
+  }
+  .agent-name { font-size: 14px; font-weight: 600; }
+  .agent-emoji { font-size: 22px; }
+  .agent-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+  .agent-tools-list {
+    display: flex; flex-wrap: wrap; gap: 5px;
+  }
+  .tool-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .agent-provider-row {
+    display: flex; gap: 6px; margin-top: 10px; align-items: center;
+  }
+
+  /* ── Repo Registry ── */
+  .repo-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 32px;
+  }
+  .repo-table th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .repo-table td {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .repo-table tr:last-child td { border-bottom: none; }
+  .repo-table tr:hover td { background: var(--surface); }
+  .repo-name {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent-cyan);
+  }
+  .repo-agents {
+    display: flex; flex-wrap: wrap; gap: 4px;
+  }
+  .repo-agent-tag {
+    font-size: 10px;
+    font-family: var(--mono);
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: rgba(139,92,246,0.12);
+    border: 1px solid rgba(139,92,246,0.2);
+    color: #c4b5fd;
+  }
+
+  /* ── Provider routing ── */
+  .provider-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  .provider-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+  }
+  .provider-card-head {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 18px;
+  }
+  .provider-logo {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .bedrock-logo { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+  .vertex-logo { background: rgba(66,133,244,0.15); color: #4285f4; border: 1px solid rgba(66,133,244,0.3); }
+  .provider-title { font-size: 16px; font-weight: 600; }
+  .provider-sub { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+  .provider-models {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .provider-model {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+  }
+  .model-name { font-family: var(--mono); font-size: 12px; color: var(--text); }
+  .model-use { font-size: 11px; color: var(--text-muted); }
+  .model-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-family: var(--mono); }
+
+  /* ── Monitoring ── */
+  .monitoring-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .monitor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .monitor-icon { font-size: 20px; margin-bottom: 10px; }
+  .monitor-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .monitor-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  /* ── Tech stack ── */
+  .stack-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .stack-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .stack-layer { font-size: 10px; font-family: var(--mono); color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .stack-items { display: flex; flex-direction: column; gap: 5px; }
+  .stack-item { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+  .stack-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+  .dot-blue { background: var(--accent-blue); }
+  .dot-green { background: var(--accent-green); }
+  .dot-amber { background: var(--accent-amber); }
+  .dot-purple { background: var(--accent-purple); }
+  .dot-cyan { background: var(--accent-cyan); }
+  .dot-pink { background: var(--accent-pink); }
+
+  /* misc */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .callout {
+    background: rgba(59,130,246,0.07);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-left: 3px solid var(--accent-blue);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .callout strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-label">Architecture Blueprint v1.0</div>
+  <h1>E2E <span>AI-Powered SDLC</span> Orchestration Platform</h1>
+  <div class="header-sub">LangGraph Orchestration · AWS Bedrock · Google Vertex AI · Multi-Repo · Human-in-the-Loop</div>
+  <div class="header-badges">
+    <span class="badge badge-blue">LangGraph 0.2</span>
+    <span class="badge badge-amber">AWS Bedrock</span>
+    <span class="badge badge-cyan">Google Vertex AI</span>
+    <span class="badge badge-green">9 Specialized Agents</span>
+    <span class="badge badge-purple">Shared Memory</span>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <div class="tab active" onclick="showTab('pipeline')">SDLC Pipeline</div>
+  <div class="tab" onclick="showTab('agents')">Agent Registry</div>
+  <div class="tab" onclick="showTab('memory')">Memory Architecture</div>
+  <div class="tab" onclick="showTab('repos')">Repo Registry</div>
+  <div class="tab" onclick="showTab('providers')">LLM Providers</div>
+  <div class="tab" onclick="showTab('monitoring')">Monitoring</div>
+  <div class="tab" onclick="showTab('stack')">Tech Stack</div>
+</nav>
+
+<div class="content">
+
+  <!-- ── PIPELINE ── -->
+  <div id="panel-pipeline" class="panel active">
+    <div class="section-title">E2E SDLC Pipeline — Click any stage to expand</div>
+    <div class="callout">
+      <strong>How it flows:</strong> Each stage is handled by a specialized LangGraph node (agent). The orchestrator graph routes between them via conditional edges. A shared memory store persists context across all stages — so the Implementation agent knows what the Design agent decided. Click any stage to see its tools, inputs, and outputs.
+    </div>
+    <div class="pipeline" id="pipeline-stages"></div>
+  </div>
+
+  <!-- ── AGENTS ── -->
+  <div id="panel-agents" class="panel">
+    <div class="section-title">Agent Registry — 9 Specialized Agents</div>
+    <div class="callout">
+      <strong>Agent = LangGraph node</strong> with a dedicated system prompt, a bound LLM provider, a tool set, and typed input/output schema. Agents communicate only through the shared <code>SDLCState</code> object — never directly.
+    </div>
+    <div class="agents-grid" id="agents-grid"></div>
+  </div>
+
+  <!-- ── MEMORY ── -->
+  <div id="panel-memory" class="panel">
+    <div class="section-title">Memory Architecture — Story-to-Story Context</div>
+    <div class="callout">
+      <strong>Critical design:</strong> When Story 2 begins executing, it receives the full accumulated context from Story 1 — coding conventions established, architecture patterns decided, test frameworks chosen, env vars set. This prevents agents from re-inventing the wheel on every story.
+    </div>
+
+    <div class="memory-flow">
+      <div style="font-size:13px;font-weight:600;margin-bottom:16px;">Memory Lifecycle Across Stories</div>
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-step-dot">📥</div>
+          <div class="flow-step-label">Story N starts<br/>Load checkpoint</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-dot">🧠</div>
+          <div class="flow-step-label">Agents read<br/>shared context</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-dot">⚡</div>
+          <div class="flow-step-label">Execute stage<br/>Produce output</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-dot">💾</div>
+          <div class="flow-step-label">Write to<br/>SDLCState</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-dot">🗄️</div>
+          <div class="flow-step-label">Persist to<br/>Redis/Postgres</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-dot">📤</div>
+          <div class="flow-step-label">Story N+1<br/>loads context</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="memory-grid">
+      <div class="memory-card">
+        <div class="memory-card-header">
+          <span class="memory-card-icon">📋</span>
+          <div>
+            <div class="memory-card-title">Project Context Memory</div>
+            <div class="memory-card-sub">Persists across all stories · Redis</div>
+          </div>
+        </div>
+        <div class="memory-schema">
+<span class="schema-key">project_context</span>: {<br/>
+&nbsp;&nbsp;<span class="schema-key">name</span>: <span class="schema-type">str</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">tech_stack</span>: <span class="schema-type">List[str]</span>,&nbsp;<span class="schema-comment"># set by design agent</span><br/>
+&nbsp;&nbsp;<span class="schema-key">code_conventions</span>: <span class="schema-type">Dict</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">architecture_decisions</span>: <span class="schema-type">List[ADR]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">repos</span>: <span class="schema-type">List[RepoConfig]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">test_framework</span>: <span class="schema-type">str</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">env_vars</span>: <span class="schema-type">Dict[env, vars]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">api_contracts</span>: <span class="schema-type">List[OpenAPI]</span><br/>
+}
+        </div>
+      </div>
+      <div class="memory-card">
+        <div class="memory-card-header">
+          <span class="memory-card-icon">📖</span>
+          <div>
+            <div class="memory-card-title">Story Execution Memory</div>
+            <div class="memory-card-sub">Per-story state · Postgres + LangGraph checkpointer</div>
+          </div>
+        </div>
+        <div class="memory-schema">
+<span class="schema-key">story_state</span>: {<br/>
+&nbsp;&nbsp;<span class="schema-key">story_id</span>: <span class="schema-type">str</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">epic_id</span>: <span class="schema-type">str</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">requirements</span>: <span class="schema-type">List[str]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">acceptance_criteria</span>: <span class="schema-type">List[str]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">files_changed</span>: <span class="schema-type">List[FileDiff]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">tests_written</span>: <span class="schema-type">List[TestFile]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">pr_url</span>: <span class="schema-type">str</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">deploy_status</span>: <span class="schema-type">Dict[env, status]</span><br/>
+}
+        </div>
+      </div>
+      <div class="memory-card">
+        <div class="memory-card-header">
+          <span class="memory-card-icon">🔗</span>
+          <div>
+            <div class="memory-card-title">Cross-Story Learning Memory</div>
+            <div class="memory-card-sub">Accumulated learnings · Vector store (pgvector)</div>
+          </div>
+        </div>
+        <div class="memory-schema">
+<span class="schema-key">learnings</span>: {<br/>
+&nbsp;&nbsp;<span class="schema-key">patterns_used</span>: <span class="schema-type">List[Pattern]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">bugs_encountered</span>: <span class="schema-type">List[BugRecord]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">test_coverage_map</span>: <span class="schema-type">Dict[module, %]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">review_comments</span>: <span class="schema-type">List[Comment]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">deploy_history</span>: <span class="schema-type">List[Deploy]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">e2e_test_suite</span>: <span class="schema-type">List[TestSpec]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">rollback_events</span>: <span class="schema-type">List[Rollback]</span><br/>
+}
+        </div>
+      </div>
+      <div class="memory-card">
+        <div class="memory-card-header">
+          <span class="memory-card-icon">⚙️</span>
+          <div>
+            <div class="memory-card-title">Tool & Config Memory</div>
+            <div class="memory-card-sub">Credentials, endpoints, registry · Secrets Manager</div>
+          </div>
+        </div>
+        <div class="memory-schema">
+<span class="schema-key">tool_config</span>: {<br/>
+&nbsp;&nbsp;<span class="schema-key">jira_project</span>: <span class="schema-type">str</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">confluence_space</span>: <span class="schema-type">str</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">github_org</span>: <span class="schema-type">str</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">repos</span>: <span class="schema-type">RepoMap</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">ci_pipeline_ids</span>: <span class="schema-type">Dict</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">env_urls</span>: <span class="schema-type">Dict[env, url]</span>,<br/>
+&nbsp;&nbsp;<span class="schema-key">provider_config</span>: <span class="schema-type">ProviderConfig</span><br/>
+}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REPOS ── -->
+  <div id="panel-repos" class="panel">
+    <div class="section-title">Repo Registry — Multi-Repo Story Assignment</div>
+    <div class="callout">
+      <strong>Multi-repo awareness:</strong> A single story can span multiple repos. The orchestrator reads the <code>repo_registry</code> at runtime and determines which repos the Implementation Agent needs to clone, modify, and PR. Each repo has its own pipeline config, language, and framework context loaded into agent memory.
+    </div>
+    <table class="repo-table">
+      <thead>
+        <tr>
+          <th>Repo</th>
+          <th>Type</th>
+          <th>Stack</th>
+          <th>Agents That Touch It</th>
+          <th>CI/CD</th>
+          <th>Test Runner</th>
+        </tr>
+      </thead>
+      <tbody id="repo-tbody"></tbody>
+    </table>
+    <div class="memory-card" style="margin-top:20px;">
+      <div class="memory-card-header">
+        <span class="memory-card-icon">🗺️</span>
+        <div>
+          <div class="memory-card-title">Story → Repo Routing Logic</div>
+          <div class="memory-card-sub">How the orchestrator assigns repos to a story</div>
+        </div>
+      </div>
+      <div class="memory-schema">
+<span class="schema-comment"># RepoRouter.resolve(story: Story) → List[RepoConfig]</span><br/><br/>
+<span class="schema-key">if</span> story.tags.contains(<span class="schema-string">"api"</span>) → assign backend_repo<br/>
+<span class="schema-key">if</span> story.tags.contains(<span class="schema-string">"ui"</span>)  → assign frontend_repo<br/>
+<span class="schema-key">if</span> story.tags.contains(<span class="schema-string">"infra"</span>) → assign infra_repo<br/>
+<span class="schema-key">if</span> story.acceptance_criteria mentions <span class="schema-string">"database"</span> → assign backend_repo<br/>
+<span class="schema-key">if</span> story.acceptance_criteria mentions <span class="schema-string">"screen"</span> or <span class="schema-string">"page"</span> → assign frontend_repo<br/><br/>
+<span class="schema-comment"># LLM fallback: if rules are ambiguous, ask the Design Agent</span><br/>
+<span class="schema-key">else</span>: design_agent.classify_repos(story) → List[repo_id]
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROVIDERS ── -->
+  <div id="panel-providers" class="panel">
+    <div class="section-title">LLM Provider Architecture — Bedrock + Vertex AI</div>
+    <div class="callout">
+      <strong>Provider-per-agent routing:</strong> Each agent is configured with a primary and fallback provider. The <code>ProviderFactory</code> handles auth, retry, rate limiting, and cost tracking. Agents are decoupled from provider details via the <code>ChatModel</code> abstraction layer.
+    </div>
+    <div class="provider-section">
+      <div class="provider-card">
+        <div class="provider-card-head">
+          <div class="provider-logo bedrock-logo">B</div>
+          <div>
+            <div class="provider-title">AWS Bedrock</div>
+            <div class="provider-sub">Primary — High-accuracy reasoning tasks</div>
+          </div>
+        </div>
+        <div class="provider-models">
+          <div class="provider-model">
+            <div>
+              <div class="model-name">anthropic.claude-3-5-sonnet</div>
+              <div class="model-use">Design, Review, Architecture docs</div>
+            </div>
+            <span class="model-badge badge badge-amber">PRIMARY</span>
+          </div>
+          <div class="provider-model">
+            <div>
+              <div class="model-name">anthropic.claude-3-haiku</div>
+              <div class="model-use">Story parsing, quick classification</div>
+            </div>
+            <span class="model-badge badge badge-amber">FAST</span>
+          </div>
+          <div class="provider-model">
+            <div>
+              <div class="model-name">meta.llama3-70b-instruct</div>
+              <div class="model-use">Code generation (open-weight fallback)</div>
+            </div>
+            <span class="model-badge badge badge-green">FALLBACK</span>
+          </div>
+          <div class="provider-model">
+            <div>
+              <div class="model-name">amazon.titan-embed-text-v2</div>
+              <div class="model-use">Embeddings for vector memory</div>
+            </div>
+            <span class="model-badge badge badge-blue">EMBED</span>
+          </div>
+        </div>
+      </div>
+      <div class="provider-card">
+        <div class="provider-card-head">
+          <div class="provider-logo vertex-logo">G</div>
+          <div>
+            <div class="provider-title">Google Vertex AI</div>
+            <div class="provider-sub">Secondary — Code gen + multimodal tasks</div>
+          </div>
+        </div>
+        <div class="provider-models">
+          <div class="provider-model">
+            <div>
+              <div class="model-name">gemini-1.5-pro</div>
+              <div class="model-use">Implementation, long-context code gen</div>
+            </div>
+            <span class="model-badge badge badge-cyan">CODE</span>
+          </div>
+          <div class="provider-model">
+            <div>
+              <div class="model-name">gemini-1.5-flash</div>
+              <div class="model-use">Test generation, quick rewrites</div>
+            </div>
+            <span class="model-badge badge badge-cyan">FAST</span>
+          </div>
+          <div class="provider-model">
+            <div>
+              <div class="model-name">gemini-1.0-pro-vision</div>
+              <div class="model-use">UI screenshot analysis for E2E tests</div>
+            </div>
+            <span class="model-badge badge badge-purple">VISION</span>
+          </div>
+          <div class="provider-model">
+            <div>
+              <div class="model-name">textembedding-gecko</div>
+              <div class="model-use">Semantic search in memory store</div>
+            </div>
+            <span class="model-badge badge badge-blue">EMBED</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="memory-card">
+      <div class="memory-card-header">
+        <span class="memory-card-icon">🔀</span>
+        <div>
+          <div class="memory-card-title">ProviderFactory — Abstraction Layer</div>
+          <div class="memory-card-sub">agents never import boto3 or google-cloud directly</div>
+        </div>
+      </div>
+      <div class="memory-schema">
+<span class="schema-comment"># providers/provider_factory.py</span><br/><br/>
+<span class="schema-key">class</span> ProviderFactory:<br/>
+&nbsp;&nbsp;<span class="schema-key">def</span> get_model(agent_role: AgentRole) → BaseChatModel:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;config = AGENT_PROVIDER_MAP[agent_role]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="schema-key">match</span> config.provider:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="schema-key">case</span> <span class="schema-string">"bedrock"</span>: <span class="schema-key">return</span> ChatBedrockConverse(model=config.model)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="schema-key">case</span> <span class="schema-string">"vertex"</span>:  <span class="schema-key">return</span> ChatVertexAI(model=config.model)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="schema-key">case</span> <span class="schema-string">"ollama"</span>:  <span class="schema-key">return</span> ChatOllama(model=config.model)<br/><br/>
+<span class="schema-comment"># Automatic failover with exponential backoff</span><br/>
+&nbsp;&nbsp;<span class="schema-key">def</span> with_fallback(primary, fallback) → RunnableWithFallbacks
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MONITORING ── -->
+  <div id="panel-monitoring" class="panel">
+    <div class="section-title">Observability & Monitoring Architecture</div>
+    <div class="callout">
+      <strong>Developers see everything in real-time:</strong> Every agent event (start, tool call, LLM call, output, error) is streamed via <code>.astream_events()</code>. The monitoring dashboard (Option B artifact) subscribes to this event stream and renders it live.
+    </div>
+    <div class="monitoring-grid">
+      <div class="monitor-card">
+        <div class="monitor-icon">📡</div>
+        <div class="monitor-title">LangGraph Event Stream</div>
+        <div class="monitor-desc">Uses <code>.astream_events(v2)</code> to emit every node entry/exit, tool call, and LLM token as a typed event. WebSocket bridge to the dashboard.</div>
+      </div>
+      <div class="monitor-card">
+        <div class="monitor-icon">🔍</div>
+        <div class="monitor-title">LangSmith Tracing</div>
+        <div class="monitor-desc">Full run traces with token counts, latency, cost per LLM call. Per-agent cost attribution across Bedrock and Vertex.</div>
+      </div>
+      <div class="monitor-card">
+        <div class="monitor-icon">📊</div>
+        <div class="monitor-title">OpenTelemetry Metrics</div>
+        <div class="monitor-desc">Agent execution time, error rates, retry counts, queue depth — all exported to CloudWatch / Google Cloud Monitoring.</div>
+      </div>
+      <div class="monitor-card">
+        <div class="monitor-icon">🧾</div>
+        <div class="monitor-title">Audit Log</div>
+        <div class="monitor-desc">Immutable append-only log of every decision, approval, deployment, and rollback. Postgres. Queryable by story, agent, or time range.</div>
+      </div>
+      <div class="monitor-card">
+        <div class="monitor-icon">🚨</div>
+        <div class="monitor-title">Alert Engine</div>
+        <div class="monitor-desc">Agent failure, deployment rollback, test failure, approval timeout — all routed to Slack/PagerDuty with full context attached.</div>
+      </div>
+      <div class="monitor-card">
+        <div class="monitor-icon">🔐</div>
+        <div class="monitor-title">RBAC Gate</div>
+        <div class="monitor-desc">Approval gates enforce role checks. Only architects can approve design. Only DevOps can approve prod deploys. JWT-verified.</div>
+      </div>
+    </div>
+    <div class="memory-card">
+      <div class="memory-card-header">
+        <span class="memory-card-icon">📺</span>
+        <div><div class="memory-card-title">Event Types — What the Dashboard Receives</div></div>
+      </div>
+      <div class="memory-schema">
+<span class="schema-comment"># Every event is typed and streamed in real-time</span><br/><br/>
+<span class="schema-key">on_chain_start</span>   → Agent {name} started — input: {story_id}<br/>
+<span class="schema-key">on_tool_start</span>    → Tool {tool_name} called — args: {args}<br/>
+<span class="schema-key">on_tool_end</span>      → Tool {tool_name} returned — result: {result}<br/>
+<span class="schema-key">on_llm_start</span>     → LLM {provider}/{model} invoked — tokens: {n}<br/>
+<span class="schema-key">on_llm_end</span>       → LLM returned — latency: {ms}, cost: ${cost}<br/>
+<span class="schema-key">on_chain_end</span>     → Agent {name} completed — output: {summary}<br/>
+<span class="schema-key">on_chain_error</span>   → Agent {name} FAILED — error: {trace}<br/>
+<span class="schema-key">on_interrupt</span>     → Human gate triggered — waiting for: {role}<br/>
+<span class="schema-key">on_resume</span>        → Human approved — resuming from: {node}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STACK ── -->
+  <div id="panel-stack" class="panel">
+    <div class="section-title">Full Technology Stack</div>
+    <div class="stack-grid" id="stack-grid"></div>
+  </div>
+
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+
+const PIPELINE_STAGES = [
+  {
+    num: '01', icon: '📄', name: 'Confluence Ingestion', agent: 'ConfluenceAgent',
+    desc: 'Reads the idea page from Confluence, extracts requirements, goals, and acceptance criteria using structured extraction.',
+    provider: 'bedrock', providerLabel: 'Bedrock Claude 3.5',
+    tools: ['confluence_read', 'text_chunker', 'requirement_extractor'],
+    inputs: ['Confluence Page URL', 'Space Key', 'Page ID'],
+    outputs: ['Structured Requirements', 'Acceptance Criteria List', 'Stakeholder Notes'],
+    memory_writes: ['project_context.requirements', 'project_context.confluence_source'],
+    color: '#3b82f6'
+  },
+  {
+    num: '02', icon: '📋', name: 'Epic & Story Generation', agent: 'StoryAgent',
+    desc: 'Breaks down requirements into Epics and User Stories following your team conventions. Creates them in Jira with proper acceptance criteria, story points estimate, and repo tags.',
+    provider: 'bedrock', providerLabel: 'Bedrock Claude 3.5',
+    tools: ['jira_create_epic', 'jira_create_story', 'jira_link_issues', 'story_estimator'],
+    inputs: ['Structured Requirements', 'Team Conventions from Memory', 'Jira Project Key'],
+    outputs: ['Epic IDs', 'Story IDs', 'Story-Repo Mapping', 'Sprint Assignment'],
+    memory_writes: ['story_state.story_id', 'story_state.acceptance_criteria', 'tool_config.jira_project'],
+    color: '#06b6d4'
+  },
+  {
+    num: '03', icon: '🏗️', name: 'Solution Design', agent: 'DesignAgent',
+    desc: 'Produces architecture decision records (ADRs), flow diagrams (Mermaid), sequence diagrams, and high-level TSD. Reads existing architecture from memory to stay consistent.',
+    provider: 'bedrock', providerLabel: 'Bedrock Claude 3.5',
+    tools: ['confluence_write', 'mermaid_generator', 'adr_writer', 'tsd_template_filler'],
+    inputs: ['Story Requirements', 'Project Architecture Memory', 'Existing API Contracts'],
+    outputs: ['Flow Diagrams (Mermaid)', 'TSD Document in Confluence', 'ADR Records', 'API Contract Updates'],
+    memory_writes: ['project_context.architecture_decisions', 'project_context.api_contracts'],
+    color: '#8b5cf6'
+  },
+  {
+    gate: true
+  },
+  {
+    num: '04', icon: '💻', name: 'Implementation', agent: 'ImplementationAgent',
+    desc: 'Writes production code across all required repos. Reads coding conventions, existing patterns, and API contracts from memory. Creates feature branches, commits with context-rich messages.',
+    provider: 'vertex', providerLabel: 'Vertex Gemini 1.5 Pro',
+    tools: ['github_clone', 'github_branch', 'github_commit', 'github_push', 'file_writer', 'code_formatter'],
+    inputs: ['Story AC', 'Repo List', 'Code Conventions Memory', 'API Contracts', 'Architecture Decisions'],
+    outputs: ['Feature Branches per Repo', 'Committed Code', 'PR Drafts'],
+    memory_writes: ['story_state.files_changed', 'learnings.patterns_used'],
+    color: '#10b981'
+  },
+  {
+    num: '05', icon: '🧪', name: 'Test Generation & Execution', agent: 'TestAgent',
+    desc: 'Writes unit, integration, and contract tests based on acceptance criteria. Runs the test suite, collects coverage, and fails the pipeline if thresholds are not met.',
+    provider: 'vertex', providerLabel: 'Vertex Gemini 1.5 Flash',
+    tools: ['file_writer', 'test_runner', 'coverage_reporter', 'github_commit'],
+    inputs: ['Implemented Code', 'Acceptance Criteria', 'Existing Test Patterns from Memory'],
+    outputs: ['Unit Tests', 'Integration Tests', 'Coverage Report', 'Test Results'],
+    memory_writes: ['story_state.tests_written', 'learnings.test_coverage_map'],
+    color: '#f59e0b'
+  },
+  {
+    num: '06', icon: '🔍', name: 'Code Review', agent: 'ReviewAgent',
+    desc: 'Performs automated code review: security scan, code style, best practices, performance issues, missing test coverage. Opens PR with detailed inline comments. Can request re-implementation.',
+    provider: 'bedrock', providerLabel: 'Bedrock Claude 3.5',
+    tools: ['github_create_pr', 'github_add_review', 'security_scanner', 'sonar_analysis'],
+    inputs: ['Feature Branch Code', 'Team Code Standards', 'Security Checklist', 'Review History Memory'],
+    outputs: ['PR with Comments', 'Review Score', 'Security Report', 'Approve/Request Changes'],
+    memory_writes: ['story_state.pr_url', 'learnings.review_comments'],
+    color: '#ec4899'
+  },
+  {
+    num: '07', icon: '🚀', name: 'Deploy per Environment', agent: 'DeployAgent',
+    desc: 'Triggers CI/CD pipeline for each environment in sequence: dev → staging → prod. Waits for health checks between each env. Rolls back automatically on failure.',
+    provider: 'bedrock', providerLabel: 'Bedrock Claude Haiku',
+    tools: ['github_merge', 'ci_trigger', 'health_checker', 'rollback_trigger', 'slack_notify'],
+    inputs: ['Merged PR', 'Environment Config Map', 'Health Check URLs', 'Rollback Thresholds'],
+    outputs: ['Deploy Status per Env', 'Health Check Results', 'Deploy URLs', 'Rollback Events'],
+    memory_writes: ['story_state.deploy_status', 'learnings.deploy_history', 'tool_config.env_urls'],
+    color: '#3b82f6'
+  },
+  {
+    num: '08', icon: '🎭', name: 'Frontend E2E Testing', agent: 'E2ETestAgent',
+    desc: 'Generates and runs Playwright tests against each deployed environment. Tests are derived from the story acceptance criteria. Uses Gemini Vision to verify UI screenshots match expected state.',
+    provider: 'vertex', providerLabel: 'Vertex Gemini Pro Vision',
+    tools: ['playwright_runner', 'screenshot_capturer', 'vision_analyzer', 'test_reporter', 'confluence_write'],
+    inputs: ['Deploy URLs per Env', 'Story AC', 'Existing E2E Test Suite from Memory', 'UI Flow Specs'],
+    outputs: ['E2E Test Results', 'Screenshots', 'Video Recordings', 'Test Report in Confluence'],
+    memory_writes: ['learnings.e2e_test_suite', 'story_state.e2e_results'],
+    color: '#06b6d4'
+  }
+];
+
+const AGENTS = [
+  { name: 'ConfluenceAgent', emoji: '📄', color: 'blue', desc: 'Ingests idea pages from Confluence. Extracts structured requirements using Claude\'s document understanding.', tools: ['confluence_read', 'chunker', 'extractor'], primary: 'Bedrock Claude 3.5', fallback: 'Bedrock Haiku' },
+  { name: 'StoryAgent', emoji: '📋', color: 'cyan', desc: 'Decomposes requirements into Epics and Stories in Jira. Applies team conventions from project memory.', tools: ['jira_epic', 'jira_story', 'jira_link', 'estimator'], primary: 'Bedrock Claude 3.5', fallback: 'Vertex Gemini' },
+  { name: 'DesignAgent', emoji: '🏗️', color: 'purple', desc: 'Produces TSDs, ADRs, and Mermaid flow diagrams. Writes design artifacts to Confluence. Triggers approval gate.', tools: ['confluence_write', 'mermaid_gen', 'adr_writer'], primary: 'Bedrock Claude 3.5', fallback: 'Vertex Gemini Pro' },
+  { name: 'ApprovalGate', emoji: '🔐', color: 'amber', desc: 'Human-in-the-loop LangGraph interrupt node. Sends notification, waits for human resume signal with approval/rejection.', tools: ['slack_notify', 'email_notify', 'jira_update'], primary: 'N/A — no LLM', fallback: 'N/A' },
+  { name: 'ImplementationAgent', emoji: '💻', color: 'green', desc: 'Writes code across all assigned repos. Reads conventions, patterns, and API contracts from shared memory before generating code.', tools: ['github_clone', 'github_branch', 'github_push', 'file_writer'], primary: 'Vertex Gemini 1.5 Pro', fallback: 'Bedrock Llama3 70B' },
+  { name: 'TestAgent', emoji: '🧪', color: 'amber', desc: 'Generates unit + integration tests from acceptance criteria. Runs suite, enforces coverage thresholds. Re-runs on failure.', tools: ['file_writer', 'test_runner', 'coverage_tool'], primary: 'Vertex Gemini Flash', fallback: 'Bedrock Haiku' },
+  { name: 'ReviewAgent', emoji: '🔍', color: 'pink', desc: 'Automated code review: security, style, coverage gaps, performance. Opens GitHub PR with inline comments.', tools: ['github_pr', 'github_review', 'security_scan', 'sonar'], primary: 'Bedrock Claude 3.5', fallback: 'Vertex Gemini Pro' },
+  { name: 'DeployAgent', emoji: '🚀', color: 'blue', desc: 'Triggers CI/CD per environment sequentially. Validates health checks. Executes automatic rollback on failure.', tools: ['ci_trigger', 'health_check', 'rollback', 'slack_notify'], primary: 'Bedrock Haiku', fallback: 'Vertex Flash' },
+  { name: 'E2ETestAgent', emoji: '🎭', color: 'cyan', desc: 'Playwright test generation + execution. Uses Gemini Vision to validate UI screenshots against expected states.', tools: ['playwright', 'screenshot', 'vision_analyzer', 'reporter'], primary: 'Vertex Gemini Vision', fallback: 'Bedrock Claude 3.5' },
+];
+
+const REPOS = [
+  { name: 'my-org/app-frontend', type: 'Frontend', stack: 'React 18, TypeScript, Tailwind', agents: ['ImplementationAgent', 'TestAgent', 'ReviewAgent', 'E2ETestAgent'], ci: 'GitHub Actions → Vercel', test: 'Jest + Playwright' },
+  { name: 'my-org/app-backend', type: 'Backend API', stack: 'Spring Boot 3, Java 21, PostgreSQL', agents: ['ImplementationAgent', 'TestAgent', 'ReviewAgent'], ci: 'GitHub Actions → AWS EKS', test: 'JUnit 5 + Testcontainers' },
+  { name: 'my-org/app-infra', type: 'Infrastructure', stack: 'Terraform, Helm, AWS', agents: ['DeployAgent'], ci: 'GitHub Actions → Terraform Cloud', test: 'Terratest' },
+  { name: 'my-org/app-e2e', type: 'E2E Tests', stack: 'Playwright, TypeScript', agents: ['E2ETestAgent'], ci: 'GitHub Actions → test runner', test: 'Playwright Test' },
+  { name: 'my-org/sdlc-orchestrator', type: 'AI Platform', stack: 'Python 3.12, LangGraph, FastAPI', agents: ['ALL (self-hosting)'], ci: 'GitHub Actions → AWS Lambda/ECS', test: 'pytest + LangSmith' },
+];
+
+const STACK = [
+  { layer: 'Orchestration', items: [['LangGraph 0.2', 'blue'],['LangChain 0.3', 'blue'],['FastAPI (control plane)', 'blue'],['Redis Streams', 'cyan']] },
+  { layer: 'LLM Providers', items: [['AWS Bedrock', 'amber'],['Google Vertex AI', 'cyan'],['LangChain ChatModel', 'blue'],['LangSmith Tracing', 'purple']] },
+  { layer: 'Memory & Storage', items: [['Redis (short-term)', 'green'],['PostgreSQL (state)', 'blue'],['pgvector (embeddings)', 'purple'],['AWS S3 (artifacts)', 'amber']] },
+  { layer: 'Tool Integrations', items: [['Confluence REST API', 'cyan'],['Jira REST API', 'cyan'],['GitHub API v4', 'green'],['GitHub Actions', 'green']] },
+  { layer: 'Testing', items: [['Playwright (E2E)', 'pink'],['Jest (unit)', 'amber'],['JUnit 5 (Java)', 'amber'],['Testcontainers', 'blue']] },
+  { layer: 'Observability', items: [['LangSmith', 'purple'],['OpenTelemetry', 'blue'],['CloudWatch', 'amber'],['Slack Webhooks', 'green']] },
+  { layer: 'Deployment', items: [['AWS EKS', 'amber'],['AWS Lambda', 'amber'],['Docker / Helm', 'blue'],['Terraform', 'green']] },
+  { layer: 'Security', items: [['AWS Secrets Manager', 'amber'],['JWT / RBAC', 'pink'],['SAST (Semgrep)', 'red'],['GitHub OIDC', 'green']] },
+];
+
+// ── Render ────────────────────────────────────────────────────────────────
+
+function renderPipeline() {
+  const container = document.getElementById('pipeline-stages');
+  PIPELINE_STAGES.forEach((s, i) => {
+    if (s.gate) {
+      container.innerHTML += `
+        <div class="gate-stage">
+          <div class="gate-icon">🔐</div>
+          <div>
+            <div class="gate-text">HUMAN APPROVAL GATE</div>
+            <div class="gate-sub">Architect reviews Design docs in Confluence → Approves or Rejects → Pipeline resumes or loops back</div>
+          </div>
+        </div>`;
+      return;
+    }
+    const provClass = s.provider === 'bedrock' ? 'provider-bedrock' : 'provider-vertex';
+    const provLabel = s.provider === 'bedrock' ? '⚡ Bedrock' : '🔵 Vertex AI';
+    const id = `stage-${i}`;
+    container.innerHTML += `
+      <div class="pipeline-stage" id="${id}" onclick="toggleStage('${id}')">
+        <div class="stage-num">${s.num}</div>
+        <div class="stage-icon">${s.icon}</div>
+        <div class="stage-main">
+          <div class="stage-header">
+            <span class="stage-name">${s.name}</span>
+            <span class="stage-agent">${s.agent}</span>
+          </div>
+          <div class="stage-desc">${s.desc}</div>
+          <div class="stage-meta">
+            <span class="stage-provider ${provClass}">${provLabel} · ${s.providerLabel}</span>
+            <span class="stage-tools">🔧 ${s.tools.join(', ')}</span>
+          </div>
+          <div class="stage-detail" id="${id}-detail">
+            <div class="detail-grid">
+              <div class="detail-box">
+                <div class="detail-box-title">📥 Inputs</div>
+                <ul>${s.inputs.map(x=>`<li>${x}</li>`).join('')}</ul>
+              </div>
+              <div class="detail-box">
+                <div class="detail-box-title">📤 Outputs</div>
+                <ul>${s.outputs.map(x=>`<li>${x}</li>`).join('')}</ul>
+              </div>
+              <div class="detail-box">
+                <div class="detail-box-title">💾 Memory Writes</div>
+                <ul>${s.memory_writes.map(x=>`<li>${x}</li>`).join('')}</ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+function toggleStage(id) {
+  const detail = document.getElementById(id + '-detail');
+  if (!detail) return;
+  detail.classList.toggle('open');
+}
+
+function renderAgents() {
+  const container = document.getElementById('agents-grid');
+  container.innerHTML = AGENTS.map(a => `
+    <div class="agent-card ${a.color}">
+      <div class="agent-card-head">
+        <div class="agent-name">${a.name}</div>
+        <div class="agent-emoji">${a.emoji}</div>
+      </div>
+      <div class="agent-desc">${a.desc}</div>
+      <div class="agent-tools-list">${a.tools.map(t=>`<span class="tool-tag">${t}</span>`).join('')}</div>
+      <div class="agent-provider-row">
+        <span class="stage-provider provider-bedrock" style="font-size:10px">Primary: ${a.primary}</span>
+        <span style="font-size:10px;color:#475569">→ ${a.fallback}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderRepos() {
+  const tbody = document.getElementById('repo-tbody');
+  tbody.innerHTML = REPOS.map(r => `
+    <tr>
+      <td><span class="repo-name">${r.name}</span></td>
+      <td><span class="badge badge-blue">${r.type}</span></td>
+      <td style="font-size:12px;color:#94a3b8">${r.stack}</td>
+      <td><div class="repo-agents">${r.agents.map(a=>`<span class="repo-agent-tag">${a}</span>`).join('')}</div></td>
+      <td style="font-size:12px;color:#94a3b8">${r.ci}</td>
+      <td style="font-size:12px;color:#94a3b8">${r.test}</td>
+    </tr>`).join('');
+}
+
+function renderStack() {
+  const container = document.getElementById('stack-grid');
+  container.innerHTML = STACK.map(s => `
+    <div class="stack-card">
+      <div class="stack-layer">${s.layer}</div>
+      <div class="stack-items">
+        ${s.items.map(([label, color]) => `
+          <div class="stack-item">
+            <div class="stack-dot dot-${color}"></div>
+            <span>${label}</span>
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function showTab(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Init
+renderPipeline();
+renderAgents();
+renderRepos();
+renderStack();
+</script>
+</body>
+</html>

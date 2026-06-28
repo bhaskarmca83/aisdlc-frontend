@@ -2,14 +2,16 @@ import { useState, useCallback, useRef } from 'react'
 import { useWebSocket } from './useWebSocket'
 import { startPipeline, approveGate, getStateSnapshot } from '../utils/api'
 
-const STAGES = ['confluence', 'stories', 'design', 'gate', 'implement', 'test', 'review', 'deploy', 'e2e']
+const STAGES = ['confluence', 'stories', 'po_gate', 'design', 'arch_gate', 'implement', 'test', 'review', 'deploy', 'e2e']
 
 const initStageMap = () =>
   Object.fromEntries(STAGES.map((s) => [s, 'idle']))
 
 export function usePipeline() {
   const [executionId,   setExecutionId]   = useState(null)
-  const [status,        setStatus]        = useState('idle')   // idle | running | awaiting_approval | completed | error
+  const [status,        setStatus]        = useState('idle')
+  const [activeGate,    setActiveGate]    = useState(null)   // 'po_gate' | 'arch_gate' | null
+  const [gateMessage,   setGateMessage]   = useState('')
   const [stageMap,      setStageMap]      = useState(initStageMap)
   const [logs,          setLogs]          = useState([])
   const [toolCalls,     setToolCalls]     = useState([])
@@ -37,10 +39,16 @@ export function usePipeline() {
       setToolCalls((p) => [{ ts, name: msg.message, meta: msg.metadata || {} }, ...p].slice(0, 20))
     }
     if (msg.type === 'llm')   setLogs((p) => [...p, { ts, type: 'LLM',   text: msg.message, id: Date.now() }])
-    if (msg.type === 'gate')  {
-      setLogs((p) => [...p, { ts, type: 'GATE',  text: msg.message, id: Date.now() }])
+
+    if (msg.type === 'gate') {
+      const gate = msg.gate || 'po_gate'
+      setActiveGate(gate)
+      setGateMessage(msg.message || '')
       setStatus('awaiting_approval')
+      setStageMap((prev) => ({ ...prev, [gate]: 'waiting' }))
+      setLogs((p) => [...p, { ts, type: 'GATE', text: msg.message || `Waiting at ${gate}`, id: Date.now() }])
     }
+
     if (msg.type === 'error') setLogs((p) => [...p, { ts, type: 'ERROR', text: msg.message, id: Date.now() }])
 
     if (msg.type === 'llm_stream') {
@@ -50,6 +58,7 @@ export function usePipeline() {
     if (msg.type === 'done') {
       const finalStatus = msg.status?.status === 'error' ? 'error' : 'completed'
       setStatus(finalStatus)
+      setActiveGate(null)
       STAGES.forEach((s) => {
         setStageMap((prev) => ({
           ...prev,
@@ -62,13 +71,8 @@ export function usePipeline() {
       }
     }
 
-    // Update metrics from state payload
-    if (msg.metrics) {
-      setMetrics((prev) => ({ ...prev, ...msg.metrics }))
-    }
-    if (msg.stories_count !== undefined) {
-      setMetrics((prev) => ({ ...prev, stories: msg.stories_count }))
-    }
+    if (msg.metrics)              setMetrics((prev) => ({ ...prev, ...msg.metrics }))
+    if (msg.stories_count != null) setMetrics((prev) => ({ ...prev, stories: msg.stories_count }))
   }, [])
 
   useWebSocket(executionId, handleMessage)
@@ -80,6 +84,8 @@ export function usePipeline() {
     setStreamBuffer('')
     setStateSnapshot(null)
     setMetrics({ stories: 0, tokens: 0, cost: 0 })
+    setActiveGate(null)
+    setGateMessage('')
     setStatus('running')
 
     const { execution_id } = await startPipeline({ idea, projectName, confluencePageUrl })
@@ -91,8 +97,12 @@ export function usePipeline() {
     if (!executionId) return
     await approveGate(executionId, { approved, reason })
     setStatus('running')
-    setStageMap((prev) => ({ ...prev, gate: 'done' }))
-  }, [executionId])
+    if (activeGate) {
+      setStageMap((prev) => ({ ...prev, [activeGate]: 'done' }))
+    }
+    setActiveGate(null)
+    setGateMessage('')
+  }, [executionId, activeGate])
 
   const reset = useCallback(() => {
     setExecutionId(null)
@@ -104,10 +114,13 @@ export function usePipeline() {
     setStateSnapshot(null)
     setStreamBuffer('')
     setMetrics({ stories: 0, tokens: 0, cost: 0 })
+    setActiveGate(null)
+    setGateMessage('')
   }, [])
 
   return {
-    executionId, status, stageMap, logs, toolCalls,
+    executionId, status, activeGate, gateMessage,
+    stageMap, logs, toolCalls,
     stateSnapshot, metrics, streamBuffer,
     run, approve, reset,
   }
