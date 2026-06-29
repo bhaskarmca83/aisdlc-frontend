@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, Link, useSearchParams } from 'react-router-dom'
 import { usePipeline } from './hooks/usePipeline'
 import PipelineStages     from './components/PipelineStages'
 import LogStream          from './components/LogStream'
@@ -6,10 +7,12 @@ import MemoryViewer       from './components/MemoryViewer'
 import ToolCallInspector  from './components/ToolCallInspector'
 import ApprovalGate       from './components/ApprovalGate'
 import RepoPanel          from './components/RepoPanel'
+import ProjectSelector    from './components/ProjectSelector'
+import RegisterProject    from './pages/RegisterProject'
 
 const TABS = ['Memory', 'Tools', 'Gate']
 
-export default function App() {
+function PipelinePage() {
   const {
     executionId, status, activeGate, gateMessage,
     stageMap, logs, toolCalls,
@@ -17,10 +20,11 @@ export default function App() {
     run, approve, reset,
   } = usePipeline()
 
-  const [idea,        setIdea]        = useState('')
-  const [projectName, setProjectName] = useState('SDLC Project')
-  const [activeTab,   setActiveTab]   = useState('Memory')
-  const [error,       setError]       = useState('')
+  const [searchParams]                           = useSearchParams()
+  const [idea,              setIdea]             = useState('')
+  const [projectConfigId,   setProjectConfigId]  = useState(searchParams.get('project') || '')
+  const [activeTab,         setActiveTab]        = useState('Memory')
+  const [error,             setError]            = useState('')
 
   // Auto-switch to Gate tab when pipeline pauses for approval
   useEffect(() => {
@@ -28,10 +32,11 @@ export default function App() {
   }, [activeGate])
 
   const handleRun = async () => {
+    if (!projectConfigId) { setError('Select a team project first'); return }
     if (!idea.trim()) { setError('Please enter an idea'); return }
     setError('')
     try {
-      await run({ idea, projectName })
+      await run({ idea, projectConfigId })
     } catch (e) {
       setError(e.message)
     }
@@ -63,6 +68,12 @@ export default function App() {
           <span>Stories: <strong className="text-white">{metrics.stories}</strong></span>
           <span>Tokens: <strong className="text-white">{metrics.tokens.toLocaleString()}</strong></span>
           <span>Est. Cost: <strong className="text-white">${metrics.cost.toFixed(4)}</strong></span>
+          <Link
+            to="/register"
+            className="bg-dark-700 hover:bg-dark-600 border border-dark-500 text-gray-300 hover:text-white text-xs px-3 py-1.5 rounded-lg transition-colors"
+          >
+            + Register Project
+          </Link>
         </div>
       </header>
 
@@ -83,14 +94,13 @@ export default function App() {
           {/* Bottom input bar */}
           <div className="border-t border-dark-600 p-3 bg-dark-800 flex-shrink-0">
             {error && <div className="text-red-400 text-xs mb-2">{error}</div>}
-            <input
-              type="text"
-              placeholder="Project name"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              className="w-full bg-dark-700 border border-dark-600 rounded px-3 py-1.5 text-sm text-gray-200 mb-2 focus:outline-none focus:border-blue-500/50"
-              disabled={status === 'running' || status === 'awaiting_approval'}
-            />
+            <div className="mb-2">
+              <ProjectSelector
+                selectedId={projectConfigId}
+                onSelect={setProjectConfigId}
+                disabled={status === 'running' || status === 'awaiting_approval'}
+              />
+            </div>
             <textarea
               placeholder="Describe your feature idea… (e.g. Add JWT auth to the Spring Boot app with login/register endpoints)"
               value={idea}
@@ -143,5 +153,14 @@ export default function App() {
 
       </div>
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/"         element={<PipelinePage />} />
+      <Route path="/register" element={<RegisterProject />} />
+    </Routes>
   )
 }

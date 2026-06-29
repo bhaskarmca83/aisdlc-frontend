@@ -77,7 +77,7 @@ export function usePipeline() {
 
   useWebSocket(executionId, handleMessage)
 
-  const run = useCallback(async ({ idea, projectName, confluencePageUrl }) => {
+  const run = useCallback(async ({ idea, projectConfigId, confluencePageUrl }) => {
     setLogs([])
     setToolCalls([])
     setStageMap(initStageMap())
@@ -88,7 +88,7 @@ export function usePipeline() {
     setGateMessage('')
     setStatus('running')
 
-    const { execution_id } = await startPipeline({ idea, projectName, confluencePageUrl })
+    const { execution_id } = await startPipeline({ idea, projectConfigId, confluencePageUrl })
     setExecutionId(execution_id)
     execIdRef.current = execution_id
   }, [])
