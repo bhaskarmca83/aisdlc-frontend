@@ -241,6 +241,7 @@ function Step2Info({ form, setForm }) {
 // ─── Step 3: Atlassian ────────────────────────────────────────────────────────
 
 function Step3Atlassian({ form, setForm, validation, setValidation }) {
+
   const isNew = form.project_type === 'new'
 
   function suggest(name) {
@@ -373,6 +374,35 @@ function Step3Atlassian({ form, setForm, validation, setValidation }) {
             <span className="text-gray-400">The space may still exist — fix credentials then re-validate.</span>
           </p>
         )}
+      </div>
+
+      {/* Execution methodology */}
+      <div className="bg-dark-700 rounded-xl p-4 border border-dark-500">
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-lg">⚙️</span>
+          <span className="font-semibold text-white text-sm">Execution Methodology</span>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs text-gray-400">Methodology</label>
+          <select
+            value={form.methodology}
+            onChange={e => setForm(f => ({ ...f, methodology: e.target.value }))}
+            className="bg-dark-800 border border-dark-600 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500/60"
+          >
+            {METHODOLOGY_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <p className="text-[11px] text-gray-500 mt-1">
+            Auto-detect reads the Jira board type at registration. You can override if needed.
+            Affects story point handling and sprint assignment during pipeline runs.
+          </p>
+          {form.methodology === 'kanban' && (
+            <p className="text-[11px] text-yellow-400 mt-1">
+              Kanban: story points will be omitted from Jira issues; pipeline focuses on continuous flow.
+            </p>
+          )}
+        </div>
       </div>
 
       {isNew && (
@@ -679,7 +709,7 @@ function Step5Review({ form, saving, error, onSave }) {
         </div>
         {form.description && <p className="text-gray-400 text-xs mb-4 leading-relaxed">{form.description}</p>}
 
-        <div className="grid grid-cols-2 gap-3 text-xs">
+        <div className="grid grid-cols-3 gap-3 text-xs">
           <div className="bg-dark-800 rounded-lg p-3">
             <div className="text-gray-500 mb-1">Jira Project</div>
             <div className="font-mono font-bold text-white">{form.jira_project_key || '—'}</div>
@@ -687,6 +717,12 @@ function Step5Review({ form, saving, error, onSave }) {
           <div className="bg-dark-800 rounded-lg p-3">
             <div className="text-gray-500 mb-1">Confluence Space</div>
             <div className="font-mono font-bold text-white">{form.confluence_space_key || '—'}</div>
+          </div>
+          <div className="bg-dark-800 rounded-lg p-3">
+            <div className="text-gray-500 mb-1">Methodology</div>
+            <div className="font-semibold text-white capitalize">
+              {form.methodology || <span className="text-gray-500 font-normal">auto-detect</span>}
+            </div>
           </div>
         </div>
       </div>
@@ -744,6 +780,13 @@ function Step5Review({ form, saving, error, onSave }) {
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
+const METHODOLOGY_OPTIONS = [
+  { value: '',        label: 'Auto-detect from Jira board' },
+  { value: 'scrum',   label: 'Scrum — sprint-based, story points, velocity' },
+  { value: 'kanban',  label: 'Kanban — continuous flow, WIP limits' },
+  { value: 'other',   label: 'Other / custom' },
+]
+
 const INIT_FORM = {
   project_type:         '',   // 'new' | 'existing'
   name:                 '',
@@ -751,6 +794,7 @@ const INIT_FORM = {
   description:          '',
   jira_project_key:     '',
   confluence_space_key: '',
+  methodology:          '',   // '' = auto-detect
   repos:                [],
 }
 
@@ -799,6 +843,7 @@ export default function RegisterProject() {
         team:                 form.team,
         jira_project_key:     form.jira_project_key,
         confluence_space_key: form.confluence_space_key,
+        methodology:          form.methodology,
         repos: form.repos
           .filter(r => r.name)
           .map(r => ({

@@ -106,6 +106,9 @@ export default function ProjectSelector({ selectedId, onSelect, disabled }) {
           <span>Team: <span className="text-gray-400">{selected.team}</span></span>
           <span>Jira: <span className="text-blue-400 font-mono">{selected.jira_project_key}</span></span>
           <span>Space: <span className="text-blue-400 font-mono">{selected.confluence_space_key}</span></span>
+          {selected.methodology && (
+            <span>Method: <span className="text-purple-400 capitalize">{selected.methodology}</span></span>
+          )}
           {selected.repos?.length > 0 && (
             <span>Repos: <span className="text-gray-400">{selected.repos.map(r => r.name).join(', ')}</span></span>
           )}

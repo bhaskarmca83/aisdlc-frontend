@@ -89,7 +89,7 @@ export async function listProjects() {
 export async function registerProject(data) {
   const res = await fetch(`${BASE}/api/projects`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: _authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
   })
   if (!res.ok) {
