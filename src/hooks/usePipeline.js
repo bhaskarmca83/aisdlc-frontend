@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { useWebSocket } from './useWebSocket'
 import { startPipeline, approveGate, getStateSnapshot } from '../utils/api'
 
-const STAGES = ['confluence', 'stories', 'po_gate', 'design', 'arch_gate', 'implement', 'test', 'review', 'deploy_local', 'e2e_local', 'deploy_cloud', 'e2e_cloud']
+const STAGES = ['intake', 'confluence', 'stories', 'po_gate', 'design', 'arch_gate', 'implement', 'test', 'review', 'deploy_local', 'e2e_local', 'deploy_cloud', 'e2e_cloud']
 
 const initStageMap = () =>
   Object.fromEntries(STAGES.map((s) => [s, 'idle']))

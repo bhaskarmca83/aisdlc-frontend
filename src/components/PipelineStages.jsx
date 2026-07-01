@@ -1,5 +1,6 @@
 const STAGES = [
-  { id: 'confluence',   label: 'Requirements',   icon: '📄', isGate: false },
+  { id: 'intake',       label: 'Intake',          icon: '🔎', isGate: false },
+  { id: 'confluence',   label: 'Requirements',    icon: '📄', isGate: false },
   { id: 'stories',      label: 'Jira Stories',   icon: '📝', isGate: false },
   { id: 'po_gate',      label: 'PO Review',      icon: '👤', isGate: true,
     desc: 'Product Owner approves stories' },
