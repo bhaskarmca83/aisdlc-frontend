@@ -8,6 +8,7 @@ const BADGE = {
   DONE:  'bg-green-800 text-green-200',
   ERROR: 'bg-red-900 text-red-300',
   ROUTE: 'bg-orange-900 text-orange-300',
+  SKIP:  'bg-gray-800 text-gray-400',
 }
 
 export default function LogStream({ logs, streamBuffer }) {

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import { useWebSocket } from './useWebSocket'
 import { startPipeline, approveGate, getStateSnapshot } from '../utils/api'
 
-const STAGES = ['confluence', 'stories', 'po_gate', 'design', 'arch_gate', 'implement', 'test', 'review', 'deploy', 'e2e']
+const STAGES = ['confluence', 'stories', 'po_gate', 'design', 'arch_gate', 'implement', 'test', 'review', 'deploy_local', 'e2e_local', 'deploy_cloud', 'e2e_cloud']
 
 const initStageMap = () =>
   Object.fromEntries(STAGES.map((s) => [s, 'idle']))
@@ -47,6 +47,19 @@ export function usePipeline() {
       setStatus('awaiting_approval')
       setStageMap((prev) => ({ ...prev, [gate]: 'waiting' }))
       setLogs((p) => [...p, { ts, type: 'GATE', text: msg.message || `Waiting at ${gate}`, id: Date.now() }])
+      // Capture structured snapshot for story cards and Confluence links
+      if (msg.stateSnapshot) {
+        setStateSnapshot(msg.stateSnapshot)
+      }
+    }
+
+    if (msg.type === 'stage_skip') {
+      const stage = msg.stage
+      if (STAGES.includes(stage)) {
+        setStageMap((prev) => ({ ...prev, [stage]: 'skipped' }))
+      }
+      const reasonText = msg.reason ? ` — ${msg.reason}` : ''
+      setLogs((p) => [...p, { ts, type: 'SKIP', text: `Stage: ${stage} [SKIPPED]${reasonText}`, id: Date.now() }])
     }
 
     if (msg.type === 'error') setLogs((p) => [...p, { ts, type: 'ERROR', text: msg.message, id: Date.now() }])

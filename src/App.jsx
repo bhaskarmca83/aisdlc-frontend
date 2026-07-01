@@ -147,7 +147,7 @@ function PipelinePage() {
           <div className="flex-1 overflow-y-auto">
             {activeTab === 'Memory' && <MemoryViewer stateSnapshot={stateSnapshot} />}
             {activeTab === 'Tools'  && <ToolCallInspector toolCalls={toolCalls} />}
-            {activeTab === 'Gate'   && <ApprovalGate status={status} activeGate={activeGate} gateMessage={gateMessage} onApprove={approve} />}
+            {activeTab === 'Gate'   && <ApprovalGate status={status} activeGate={activeGate} gateMessage={gateMessage} stateSnapshot={stateSnapshot} onApprove={approve} />}
           </div>
         </aside>
 
