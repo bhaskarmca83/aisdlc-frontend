@@ -66,8 +66,8 @@ function PipelinePage() {
         </div>
         <div className="flex items-center gap-4 text-xs text-gray-400">
           <span>Stories: <strong className="text-white">{metrics.stories}</strong></span>
-          <span>Tokens: <strong className="text-white">{metrics.tokens.toLocaleString()}</strong></span>
-          <span>Est. Cost: <strong className="text-white">${metrics.cost.toFixed(4)}</strong></span>
+          <span>Tokens: <strong className="text-white">{metrics.total_tokens.toLocaleString()}</strong></span>
+          <span>Est. Cost: <strong className="text-white">{metrics.cost}</strong></span>
           <Link
             to="/register"
             className="bg-dark-700 hover:bg-dark-600 border border-dark-500 text-gray-300 hover:text-white text-xs px-3 py-1.5 rounded-lg transition-colors"

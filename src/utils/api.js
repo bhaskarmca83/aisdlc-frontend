@@ -1,4 +1,11 @@
-const BASE = 'http://localhost:8001'
+const BASE    = 'http://localhost:8001'
+const _API_KEY = import.meta.env.VITE_API_KEY || ''
+
+function _authHeaders(extra = {}) {
+  const h = { ...extra }
+  if (_API_KEY) h['Authorization'] = `Bearer ${_API_KEY}`
+  return h
+}
 
 // ─── Profiles ─────────────────────────────────────────────────────────────────
 
@@ -102,7 +109,7 @@ export async function deleteProject(id) {
 export async function startPipeline({ idea, projectConfigId, confluencePageUrl }) {
   const res = await fetch(`${BASE}/api/pipeline/run`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: _authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({
       idea,
       project_config_id:   projectConfigId  || '',
@@ -117,13 +124,13 @@ export async function startPipeline({ idea, projectConfigId, confluencePageUrl }
 }
 
 export async function getStatus(executionId) {
-  const res = await fetch(`${BASE}/api/pipeline/${executionId}/status`)
+  const res = await fetch(`${BASE}/api/pipeline/${executionId}/status`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`Status fetch failed: ${res.status}`)
   return res.json()
 }
 
 export async function getStateSnapshot(executionId) {
-  const res = await fetch(`${BASE}/api/pipeline/${executionId}/state`)
+  const res = await fetch(`${BASE}/api/pipeline/${executionId}/state`, { headers: _authHeaders() })
   if (!res.ok) throw new Error(`State fetch failed: ${res.status}`)
   return res.json()
 }
@@ -131,7 +138,7 @@ export async function getStateSnapshot(executionId) {
 export async function approveGate(executionId, { approved = true, reason = '' } = {}) {
   const res = await fetch(`${BASE}/api/gate/${executionId}/approve`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: _authHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ approved, reason }),
   })
   if (!res.ok) throw new Error(`Gate approval failed: ${res.status}`)

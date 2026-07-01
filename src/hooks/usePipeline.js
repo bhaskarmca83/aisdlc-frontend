@@ -16,7 +16,7 @@ export function usePipeline() {
   const [logs,          setLogs]          = useState([])
   const [toolCalls,     setToolCalls]     = useState([])
   const [stateSnapshot, setStateSnapshot] = useState(null)
-  const [metrics,       setMetrics]       = useState({ stories: 0, tokens: 0, cost: 0 })
+  const [metrics,       setMetrics]       = useState({ stories: 0, total_tokens: 0, cost: '$0.00' })
   const [streamBuffer,  setStreamBuffer]  = useState('')
 
   const execIdRef = useRef(null)
@@ -25,12 +25,20 @@ export function usePipeline() {
     if (!msg) return
     const ts = new Date().toISOString().substr(11, 8)
 
-    if (msg.type === 'stage_update') {
+    if (msg.type === 'stage_start') {
       const stage = msg.stage
       if (STAGES.includes(stage)) {
         setStageMap((prev) => ({ ...prev, [stage]: 'running' }))
       }
-      setLogs((prev) => [...prev, { ts, type: 'INFO', text: `Stage: ${stage}`, id: Date.now() }])
+      setLogs((prev) => [...prev, { ts, type: 'INFO', text: `Stage started: ${stage}`, id: Date.now() }])
+    }
+
+    if (msg.type === 'stage_update') {
+      const stage = msg.stage
+      if (STAGES.includes(stage)) {
+        setStageMap((prev) => ({ ...prev, [stage]: prev[stage] === 'skipped' ? 'skipped' : 'done' }))
+      }
+      setLogs((prev) => [...prev, { ts, type: 'DONE', text: `Stage done: ${stage}`, id: Date.now() }])
     }
 
     if (msg.type === 'info')  setLogs((p) => [...p, { ts, type: 'INFO',  text: msg.message, id: Date.now() }])
@@ -84,7 +92,14 @@ export function usePipeline() {
       }
     }
 
-    if (msg.metrics)              setMetrics((prev) => ({ ...prev, ...msg.metrics }))
+    if (msg.type === 'metrics') {
+      setMetrics((prev) => ({
+        ...prev,
+        total_tokens: msg.total_tokens ?? prev.total_tokens,
+        // ~$3 per 1M tokens for Sonnet as rough estimate
+        cost: `$${(((msg.total_tokens ?? 0) / 1_000_000) * 3).toFixed(4)}`,
+      }))
+    }
     if (msg.stories_count != null) setMetrics((prev) => ({ ...prev, stories: msg.stories_count }))
   }, [])
 
@@ -96,7 +111,7 @@ export function usePipeline() {
     setStageMap(initStageMap())
     setStreamBuffer('')
     setStateSnapshot(null)
-    setMetrics({ stories: 0, tokens: 0, cost: 0 })
+    setMetrics({ stories: 0, total_tokens: 0, cost: '$0.00' })
     setActiveGate(null)
     setGateMessage('')
     setStatus('running')
@@ -126,7 +141,7 @@ export function usePipeline() {
     setToolCalls([])
     setStateSnapshot(null)
     setStreamBuffer('')
-    setMetrics({ stories: 0, tokens: 0, cost: 0 })
+    setMetrics({ stories: 0, total_tokens: 0, cost: '$0.00' })
     setActiveGate(null)
     setGateMessage('')
   }, [])

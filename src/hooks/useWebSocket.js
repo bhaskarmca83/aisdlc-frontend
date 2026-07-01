@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-const WS_BASE = 'ws://localhost:8001'
+const WS_BASE  = 'ws://localhost:8001'
+const _WS_TOKEN = import.meta.env.VITE_API_KEY || ''
 
 export function useWebSocket(executionId, onMessage) {
   const wsRef     = useRef(null)
@@ -8,8 +9,8 @@ export function useWebSocket(executionId, onMessage) {
 
   const connect = useCallback(() => {
     if (!executionId || wsRef.current?.readyState === WebSocket.OPEN) return
-
-    const ws = new WebSocket(`${WS_BASE}/ws/events/${executionId}`)
+    const tokenParam = _WS_TOKEN ? `?token=${encodeURIComponent(_WS_TOKEN)}` : ''
+    const ws = new WebSocket(`${WS_BASE}/ws/events/${executionId}${tokenParam}`)
     wsRef.current = ws
     activeRef.current = true
 
